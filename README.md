@@ -19,7 +19,7 @@ Abstract: *We introduce PhysGaussian, a new method that seamlessly integrates ph
 This repository uses original gaussian-splatting as a submodule. Use the following command to clone:
 
 ```shell
-git clone --recurse-submodules git@github.com:XPandora/PhysGaussian.git
+git clone --recurse-submodules https://github.com/EGuney-1/PhysGaussian.git
 ```
 
 ## Setup
