@@ -40,7 +40,7 @@ from utils.render_utils import *
 wp.init()
 wp.config.verify_cuda = True
 
-ti.init(arch=ti.cuda, device_memory_GB=8.0)
+ti.init(arch=ti.cuda, device_memory_GB=6)
 
 
 class PipelineParamsNoparse:
@@ -287,6 +287,20 @@ if __name__ == "__main__":
             save_to_h5=args.output_h5,
         )
 
+    # ----- begin custom code -----
+    gravity_init = np.array([0, 0, 2.8], dtype=np.float64)
+    gravity_final = np.array([0, 0, 2.8], dtype=np.float64)
+    def lin_interpolate(v0, v1, r):
+        """ Linearly interpolate v0 and v1 by ratio r, with 0 <= r <= 1, i.e. 
+                * r=0 -> return v0 
+                * r=1 -> return v1 
+                * r=0.5 -> return (v1-v0)/2 
+        """
+        return v0 + (v1-v0) * r
+    def sigmoid_shifted(x, s=10, t=.5):
+        return 1 / (1 + np.exp(-(x-t)*s))
+    # ----- end   custom code -----
+
     substep_dt = time_params["substep_dt"]
     frame_dt = time_params["frame_dt"]
     frame_num = time_params["frame_num"]
@@ -295,6 +309,10 @@ if __name__ == "__main__":
     shs_render = shs
     height = None
     width = None
+
+    total_steps = frame_num * step_per_frame
+    curr_step = 0
+
     for frame in tqdm(range(frame_num)):
         current_camera = get_camera_view(
             model_path,
@@ -317,6 +335,18 @@ if __name__ == "__main__":
 
         for step in range(step_per_frame):
             mpm_solver.p2g2p(frame, substep_dt, device=device)
+            
+            # ----- begin custom code -----
+            # frac = sigmoid_shifted(curr_step/total_steps)
+            frac = curr_step/total_steps
+            g = lin_interpolate(gravity_init, gravity_final, frac)
+            mpm_solver.set_gravity(g[0], g[1], g[2])
+            curr_step += 1
+            # ----- end custom code -----
+        # ----- begin custom code -----
+        # print(f'>>> frac: {frac} -> g: ({g[0]:.5f}, {g[1]:.5f}, {g[2]:.5f})')
+        # ----- end custom code -----
+
 
         if args.output_ply or args.output_h5:
             save_data_at_frame(

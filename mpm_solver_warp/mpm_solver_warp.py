@@ -379,6 +379,9 @@ class MPM_Simulator_WARP:
                 device=device,
             )
 
+    def set_gravity(self, x, y, z):
+        self.mpm_model.gravitational_accelaration = wp.vec3(x, y, z)
+
     def finalize_mu_lam(self, device="cuda:0"):
         wp.launch(
             kernel=compute_mu_lam_from_E_nu,
