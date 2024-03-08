@@ -1,5 +1,6 @@
 import json
 import numpy as np
+import torch
 
 # # Specify the path to your JSON file
 # file_path = "model/tree_4_30k/cameras.json"
@@ -50,4 +51,23 @@ def rotation_angles(normal):
     
     return np.degrees(theta_x), np.degrees(theta_y), np.degrees(theta_z)
 
+def min_max_values(vectors):
+        # Convert the list of vectors to a PyTorch tensor
+        tensor = torch.tensor(vectors)
+        
+        # Compute the minimum and maximum values along each dimension
+        min_values, _ = torch.min(tensor, dim=0)
+        max_values, _ = torch.max(tensor, dim=0)
+
+        # Initialize an empty list to store the concatenated values
+        boundary = []
+
+        # Iterate over the range of the length of min_values (assuming min_values and max_values have the same length)
+        for i in range(len(min_values)):
+            boundary.append(min_values[i].item())
+            boundary.append(max_values[i].item())
+
+        return boundary
+
+        
 

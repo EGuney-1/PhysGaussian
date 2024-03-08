@@ -36,7 +36,7 @@ from utils.decode_param import *
 from utils.transformation_utils import *
 from utils.camera_view_utils import *
 from utils.render_utils import *
-from utils.calculate_rotation_from_cameras import *
+from utils.custom_utils import *
 
 wp.init()
 wp.config.verify_cuda = True
@@ -170,23 +170,24 @@ if __name__ == "__main__":
         None,
         None,
     )
-    if preprocessing_params["sim_area"] is not None:
-        boundary = preprocessing_params["sim_area"]
-        assert len(boundary) == 6
-        mask = torch.ones(rotated_pos.shape[0], dtype=torch.bool).to(device="cuda")
-        for i in range(3):
-            mask = torch.logical_and(mask, rotated_pos[:, i] > boundary[2 * i])
-            mask = torch.logical_and(mask, rotated_pos[:, i] < boundary[2 * i + 1])
+    
+    boundary = min_max_values(rotated_pos)
 
-        unselected_pos = init_pos[~mask, :]
-        unselected_cov = init_cov[~mask, :]
-        unselected_opacity = init_opacity[~mask, :]
-        unselected_shs = init_shs[~mask, :]
+    assert len(boundary) == 6
+    mask = torch.ones(rotated_pos.shape[0], dtype=torch.bool).to(device="cuda")
+    for i in range(3):
+        mask = torch.logical_and(mask, rotated_pos[:, i] > boundary[2 * i])
+        mask = torch.logical_and(mask, rotated_pos[:, i] < boundary[2 * i + 1])
 
-        rotated_pos = rotated_pos[mask, :]
-        init_cov = init_cov[mask, :]
-        init_opacity = init_opacity[mask, :]
-        init_shs = init_shs[mask, :]
+    unselected_pos = init_pos[~mask, :]
+    unselected_cov = init_cov[~mask, :]
+    unselected_opacity = init_opacity[~mask, :]
+    unselected_shs = init_shs[~mask, :]
+
+    rotated_pos = rotated_pos[mask, :]
+    init_cov = init_cov[mask, :]
+    init_opacity = init_opacity[mask, :]
+    init_shs = init_shs[mask, :]
 
     transformed_pos, scale_origin, original_mean_pos = transform2origin(rotated_pos)
     transformed_pos = shift2center111(transformed_pos)
