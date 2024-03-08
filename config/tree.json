@@ -1,0 +1,16 @@
+{
+
+    "substep_dt": 1e-4,
+    "frame_dt": 4e-2,
+    "frame_num": 10,
+
+    "nu": 0.4,
+    "E": 2e6,
+    "material": "jelly",
+    "g": [0.2,0.2,0.2],
+    "density": 200,
+
+    "sim_area":
+    [-100, 100, -100, 100, -100, 100]
+
+}

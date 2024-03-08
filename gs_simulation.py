@@ -36,11 +36,12 @@ from utils.decode_param import *
 from utils.transformation_utils import *
 from utils.camera_view_utils import *
 from utils.render_utils import *
+from utils.calculate_rotation_from_cameras import *
 
 wp.init()
 wp.config.verify_cuda = True
 
-ti.init(arch=ti.cuda, device_memory_GB=6)
+ti.init(arch=ti.cuda, device_memory_GB=16)
 
 
 class PipelineParamsNoparse:
@@ -135,10 +136,28 @@ if __name__ == "__main__":
             init_pos,
             "./log/init_particles.ply",
         )
+
+    # ----- begin custom code -----
+        
+    cam_path = os.path.join(model_path, "cameras.json")
+    with open(cam_path) as f:
+        data = json.load(f)
+
+    positions = []
+    for row in data:
+        positions.append(row["position"])
+
+    normal = fit_plane(positions)
+    rotations = [float(angle) for angle in rotation_angles(normal)]
+
     rotation_matrices = generate_rotation_matrices(
-        torch.tensor(preprocessing_params["rotation_degree"]),
-        preprocessing_params["rotation_axis"],
+        torch.tensor(rotations),
+        [0, 1, 2],
     )
+
+    # ----- end custom code -----
+
+
     rotated_pos = apply_rotations(init_pos, rotation_matrices)
 
     if args.debug:
